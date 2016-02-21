@@ -56,6 +56,22 @@ test(`it serializes a collection of models by returning an array of their attrs 
   });
 });
 
+test(`it serializes a plain array of homogeneous models`, function(assert) {
+  let wordSmiths = [
+    this.schema.wordSmith.create({id: 1, name: 'Link'}),
+    this.schema.wordSmith.create({id: 2, name: 'Zelda'})
+  ];
+
+  let result = this.registry.serialize(wordSmiths);
+
+  assert.deepEqual(result, {
+    wordSmiths: [
+      {id: '1', name: 'Link'},
+      {id: '2', name: 'Zelda'}
+    ]
+  });
+});
+
 test(`it can serialize an empty collection`, function(assert) {
   let wordSmiths = this.schema.wordSmith.all();
   let result = this.registry.serialize(wordSmiths);

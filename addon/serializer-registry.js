@@ -17,6 +17,30 @@ function isCollection(object) {
   return object instanceof Collection;
 }
 
+function isModelOrCollection(object) {
+  return isModel(object) || isCollection(object);
+}
+
+function homogeneousModelName(array) {
+  let firstModelName = isModel(array[0]) && array[0].modelName;
+
+  if (!firstModelName) {
+    return false;
+  }
+
+  return array.every((model) => {
+    return isModel(model) && model.modelName === firstModelName;
+  }) && firstModelName;
+}
+
+function modelNameForResponse(response) {
+  if (isModelOrCollection(response)) {
+    return response.modelName;
+  } else {
+    return _isArray(response) && homogeneousModelName(response);
+  }
+}
+
 export default class SerializerRegistry {
 
   constructor(schema, serializerMap = {}) {
@@ -32,8 +56,10 @@ export default class SerializerRegistry {
   serialize(response, request) {
     this.alreadySerialized = {};
 
-    if (this._isModelOrCollection(response)) {
-      let serializer = this._serializerFor(response.modelName);
+    let modelName = modelNameForResponse(response);
+
+    if (modelName) {
+      let serializer = this._serializerFor(modelName);
 
       /*
         TODO:
@@ -86,7 +112,6 @@ export default class SerializerRegistry {
 
         return json;
       }, {});
-
     } else {
       return response;
     }
@@ -242,10 +267,6 @@ export default class SerializerRegistry {
     );
 
     return ModelSerializer ? new ModelSerializer(this._serializerMap) : this.baseSerializer;
-  }
-
-  _isModelOrCollection(object) {
-    return isModel(object) || isCollection(object);
   }
 
   _keyForModelOrCollection(modelOrCollection) {
